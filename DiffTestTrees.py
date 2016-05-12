@@ -4,11 +4,9 @@ Created on Apr 29, 2016
 @author: petterwildhagen
 '''
 
-
-#from testrail import *
-
 from testrail_lib import titleInSections
-from testrail_lib import testrailError
+#from testrail_lib import testrailError
+from TestSectionTree import TestTree
 
 class DiffTestTrees:
     def __init__(self,sectionDiffTree,masterId,projectId,suitename,client):
@@ -17,18 +15,17 @@ class DiffTestTrees:
         self.masterID = masterId
         self.suiteName = suitename
         self.client = client
-        self.diffTree = None
+        self.masterTree = TestTree(self.masterID,self.suiteName,self.client).getTree()
+        self.projectTree = TestTree(self.projectID,self.suiteName,self.client).getTree()
+        self.diffTree = self.sectionDiffTree.getDiffTree()
         self.createTree()
     ''' 
     Method to create a diff tree that contains tests that are moved or that are missing
     or where the content is changed
     '''
     def createTree(self):
-        masterSuiteID = self.getSuiteID(self.masterID)
-        projectSuiteID = self.getSuiteID(self.projectID)
-        self.masterTree = self.tests_JSON_tree(self.masterID, masterSuiteID,self.sectionDiffTree.getMasterTree())
-        self.projectTree = self.tests_JSON_tree(self.projectID, projectSuiteID,self.sectionDiffTree.getProjectTree())
-        self.diffTree = self.compareTestTrees(self.masterTree,self.projectTree,self.sectionDiffTree.getDiffTree())
+
+        self.compareTestTrees(self.masterTree,self.projectTree) #,self.sectionDiffTree.getDiffTree())
     def getDiffTree(self):
         return self.diffTree
     '''
@@ -38,39 +35,39 @@ class DiffTestTrees:
     tarTree - the target for the comparison
     diffTree - the diff tree to generate
     '''
-    def compareTestTrees(self,srcTree,tarTree,diffTree):
+    def compareTestTrees(self,srcTree,tarTree): #,diffTree):
         for a in range(0,len(srcTree['sections'])):
             if a < len(tarTree['sections']):
                 if srcTree['sections'][a]['name'] == tarTree['sections'][a]['name']:  
                     # node names match- compare the tests
-                    diffTree = self.compareTests(srcTree['sections'][a],tarTree['sections'][a],diffTree)
-                    self.compareTestTrees(srcTree['sections'][a],tarTree['sections'][a],diffTree)
+                    self.compareTests(srcTree['sections'][a],tarTree['sections'][a]) #,diffTree)
+                    self.compareTestTrees(srcTree['sections'][a],tarTree['sections'][a]) #,diffTree)
                 else: 
                     k = titleInSections(srcTree['sections'][a]['name'], tarTree['sections'])
                     if k > -1:       
                         # nodes moved - compare tests in moved nodes 
-                        diffTree = self.compareTests(srcTree['sections'][a],tarTree['sections'][k],diffTree)
-                        self.compareTestTrees(srcTree['sections'][a],tarTree['sections'][k],diffTree)
+                        self.compareTests(srcTree['sections'][a],tarTree['sections'][k]) #,diffTree)
+                        self.compareTestTrees(srcTree['sections'][a],tarTree['sections'][k]) #,diffTree)
                     else:  
                         # node missing - mark all tests as missing - if any
-                        diffTree = self.setTestsToMissing(srcTree['sections'][a],diffTree)
+                        self.setTestsToMissing(srcTree['sections'][a])
             else:
                 k = titleInSections(srcTree['sections'][a]['name'], tarTree['sections'])
                 if k >-1:
                     # node moved - compare tests in moved nodes
-                    diffTree = self.compareTests(srcTree['sections'][a],tarTree['sections'][k],diffTree)
-                    self.compareTestTrees(srcTree['sections'][a],tarTree['sections'][k],diffTree)
+                    self.compareTests(srcTree['sections'][a],tarTree['sections'][k]) #,diffTree)
+                    self.compareTestTrees(srcTree['sections'][a],tarTree['sections'][k]) #,diffTree)
                 else:      
-                    # node missing - mark all tests as missing     
-                    diffTree = self.setTestsToMissing(srcTree['sections'][a],diffTree)
-        return diffTree    
+                    # node missing - mark all tests as missing   
+                    self.setTestsToMissing(srcTree['sections'][a]) #,diffTree)
+           
     '''
     Method to compare tests in a section. Differences can be that a test is 'moved' or 'missing'.
     Parameters:
     src - src sectionof comparison
     tar - tar section of comparison
     '''
-    def compareTests(self,src,tar,diffTree):
+    def compareTests(self,src,tar):
         if 'tests' in src.keys():
             if 'tests' in tar.keys():
                 for i in range(0,len(src['tests'])):
@@ -88,7 +85,8 @@ class DiffTestTrees:
                             else:
                                 # test is missing, mark as such
                                 ct['action'] = 'missing'
-                            diffTree = self.appendTest2DiffTree(diffTree, ct)
+                            #diffTree = 
+                            self.appendTest2DiffTree(self.diffTree, ct)
                         else:     
                             change = self.compare2tests(src['tests'][i],tar['tests'][i])  
                             if change != None:
@@ -96,7 +94,7 @@ class DiffTestTrees:
                                 ct['title'] = src['tests'][i]['title']
                                 ct['parent'] = src['name']
                                 ct['change'] = change
-                                diffTree = self.appendTest2DiffTree(diffTree, ct)
+                                self.appendTest2DiffTree(self.diffTree, ct)
                     else:
                         ct = {'title' : src['tests'][i]['title'],
                               'parent' : src['name']}
@@ -110,55 +108,28 @@ class DiffTestTrees:
                         else:
                             # test is missing, mark as such
                             ct['action'] = 'missing'
-                        diffTree = self.appendTest2DiffTree(diffTree, ct)
-        return diffTree  
+                        #diffTree = 
+                        self.appendTest2DiffTree(self.diffTree, ct)
+            else:   
+                self.setTestsToMissing(src)
+        #return diffTree  
     '''
     Method to set all tests in a section to missing
     Parameters:
     src - the section were all tests should be set to missing
     diffTree - the diff tree to append the missing tests to
     '''
-    def setTestsToMissing(self,src,diffTree):
+    def setTestsToMissing(self,src):
         if len(src) > 0:
             if 'tests' in src.keys():
                 for i in range(0,len(src['tests'])):
                     ct = {'title' : src['tests'][i]['title'],
                       'parent' : src['name'],
-                      'action' : 'missing'}
+                      'action' : 'amissing'}
     
-                    diffTree = self.appendTest2DiffTree(diffTree, ct)       
-        return diffTree      
-    '''
-    Method to get ID of the suite based on name
-    Parameters:
-    projectId - Id of the project to look for the suite ID
-    Throws:
-    testrailError if the suite cannot be found
-    '''
-    def getSuiteID(self,projectID):
-        suites = self.client.send_get('get_suites/' + str(projectID))
-        for i in range(0,len(suites)):
-            if suites[i]['name'] == self.suiteName:
-                return suites[i]['id']
-        raise testrailError("Cannot find suite in project " + str(projectID) + " with name " + self.suiteName) 
-    ''' 
-    Method to get all tests for a particular suite 
-    '''
-    def tests_JSON_tree(self,projectId,suiteId,sectionTree):
-        tests = self.client.send_get('get_cases/' + str(projectId) + '&suite_id=' + str(suiteId))
-        sT = self.tests_JSONflat2tree(sectionTree,tests)
-        return sT
-    '''
-    Function to create a tree structure of tests from a suite
-    Parameters:
-    sectionTree : tree structure of sections in the suite
-    flatJSONtests : flat JSON object with tests for the 
-    '''            
-    def tests_JSONflat2tree(self,sectionTree,flatJSONtests):
-        for a in range(0,len(flatJSONtests)):
-            test = flatJSONtests[a]
-            self.append_test_2_tree(sectionTree['sections'],test)
-        return sectionTree
+                    self.appendTest2DiffTree(self.diffTree, ct)       
+        #return diffTree      
+
     '''
     Method that appends test to diff tree
     The location where the node is appended is determined by matching the parent of the 
@@ -174,10 +145,10 @@ class DiffTestTrees:
             if 'tests' not in diffTree.keys():
                 diffTree['tests'] = []
             diffTree['tests'].append(dt)
-            return diffTree
+            return #diffTree
         for a in range(0,len(diffTree['sections'])):
             self.appendTest2DiffTree(diffTree['sections'][a],dt)
-        return diffTree  
+        return #diffTree  
     '''
     Function to append test to a sectionTree
     Parameters:

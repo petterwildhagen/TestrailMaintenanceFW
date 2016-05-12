@@ -4,6 +4,7 @@ Class to represent a tree of tests organized in sections
 @author: petterwildhagen
 '''
 from testrail_lib import testrailError
+
 class SectionTree:
     def __init__(self,projectID,suiteName,client):
         self.projectID = projectID

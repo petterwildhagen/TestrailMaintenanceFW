@@ -6,6 +6,7 @@ Created on Apr 29, 2016
 from testrail_lib import getParents
 from testrail_lib import testrailError
 from testrail_lib import titleInSections
+from TestSectionTree import SectionTree
 
 '''
 Class to create a diff tree for sections
@@ -16,17 +17,14 @@ class DiffSectionTrees:
         self.projectID = projectID
         self.suiteName = suiteName
         self.diffTree = None
-        self.client = client
-            
-        self.masterTree = None
-        self.projectTree = None
+        self.client = client  
+        self.masterTree = SectionTree(self.masterID,self.suiteName,self.client).getTree()
+        self.projectTree = SectionTree(self.projectID,self.suiteName,self.client).getTree()
         self.createTree()
  
     def createTree(self):
-        masterSuiteID = self.getSuiteID(self.masterID)
-        projectSuiteID = self.getSuiteID(self.projectID)
-        self.masterTree = self.sections_JSON_tree(self.masterID, masterSuiteID)
-        self.projectTree = self.sections_JSON_tree(self.projectID, projectSuiteID)
+       
+     
         self.diffTree = self.createSectionsDiffTree()
     def getDiffTree(self):
         return self.diffTree
@@ -58,7 +56,6 @@ class DiffSectionTrees:
     A JSON object that displays differences between the trees
     '''
     def compareSectionTrees(self,srcTree,tarTree,diffTree):
-
         for a in range(0,len(srcTree['sections'])):
             parents = getParents(diffTree, srcTree['id'],srcTree['name'])
             dt = {'parent' : srcTree['name'],
@@ -90,72 +87,6 @@ class DiffSectionTrees:
                     dt['action'] = 'missing'
                     diffTree = self.append2DiffTree(diffTree,dt) 
         return diffTree   
-
-    '''
-    Method to get ID of the suite based on name
-    Parameters:
-    projectId - Id of the project to look for the suite ID
-    Throws:
-    testrailError if the suite cannot be found
-    '''
-    def getSuiteID(self,projectID):
-        suites = self.client.send_get('get_suites/' + str(projectID))
-        for i in range(0,len(suites)):
-            if suites[i]['name'] == self.suiteName:
-                return suites[i]['id']
-        raise testrailError("Cannot find suite in project " + str(projectID) + " with name " + self.suiteName) 
-    '''
-    Function to create a JSON tree from a suite name in a project
-    '''
-    def sections_JSON_tree(self,projectID,suiteID):
-        sections = self.client.send_get('get_sections/' + str(projectID) + '&suite_id=' + str(suiteID))
-        sT = self.sections_JSONflat2tree(sections)
-        return sT
-    '''
-    Method to create a tree structured JSON object from the flat structure returned from Testrail
-    Parameters:
-    json_in : the flat json object from testrail
-    name : the name of the tree
-    Returns:
-    A JSON object with a tree Structure
-    '''
-    def sections_JSONflat2tree(self,inp):
-        output = {'sections' : [],
-              'id' : 1,
-              'parent_id' : None,
-              'name' : self.suiteName}
-
-        for l in inp:
-            if l['depth'] == 0:
-                output['sections'].append({'name' : l['name'],
-                                           'id' : l['id'],
-                                           'sections' : [],
-                                           'parent_id' : 1,
-                                           'parent_name' : None
-                                           })      
-            else:
-                self.append_section(output['sections'],l)
-                # append paren relation names        
-        return output
-    '''
-    Function to append a JSON object to the sections in a JSON tree
-    Parameters:
-    obj: the JSON tree to append the object to
-    io : the object to append to the tree
-    '''  
-    def append_section(self,obj,io):
-        for a in range(0,len(obj)):
-            if obj[a]['id'] == io['parent_id']:
-                obj[a]['sections'].append({'name' : io['name'],
-                                           'id' : io['id'],
-                                           'parent_id' : io['parent_id'],
-                                           'parent_name' : io['name'],
-                                           'sections' : []})
-                return 
-        for a in range(0,len(obj)):
-            if len(obj[a]['sections']) > 0:
-                self.append_section(obj[a]['sections'],io)
-
     '''
     Method that appends a section to a diff tree.
     The location where the node is appended is determined by matching the parent of the 

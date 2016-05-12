@@ -15,7 +15,7 @@ from PyQt4 import Qt, QtGui, QtCore
 from PyQt4.Qt import *
 #from testrail_lib import *
 from DiffTestrailProjects import *
-from TestSectionTree import *
+from UpdateTests import *
 
 '''
 Class to handle login to Testrail
@@ -119,9 +119,11 @@ class MainWindow(QtGui.QMainWindow):
     def suiteClk(self):
         sender = self.sender()
         suiteName = sender.name
+        suiteID = sender.ID
         print "suiteClk " , sender.name , " pressed"
         self.removeWidgets()
-        self.allProjects.suiteClk(suiteName)
+        self.allProjects.suiteClk(suiteName,suiteID)
+        self.statusBar().showMessage('Please select sections to update from')
     def goBackToProjects(self):     
         self.statusBar().showMessage('Returning to project overview')
         self.setWindowTitle('Testrail analysis tool - Main Window')
@@ -140,8 +142,6 @@ class MainWindow(QtGui.QMainWindow):
         self.subwindows.append(lw)
     def analyzeTests(self):
         sender = self.sender()
-        print 'Analyze tests' 
-        sender = self.sender()
         name = sender.pname
         inp = sender.difftree
         lw = AnalyzeTests(inp,name)
@@ -151,6 +151,7 @@ class MainWindow(QtGui.QMainWindow):
     def masterSuites(self):
         self.removeWidgets()
         self.allProjects.masterSuites()
+        self.statusBar().showMessage('Please select a suite to update from')
         print "Master selected"
     def placeProjects(self):
         self.removeWidgets()
@@ -159,6 +160,26 @@ class MainWindow(QtGui.QMainWindow):
     def selectMode(self):
         self.removeWidgets()
         self.allProjects.selectMode()
+        self.statusBar().showMessage('Please select to update from master or verify projects')
+    def updateTests(self):
+        print "update sec called"
+        sender = self.sender()
+        #sections = sender.sections
+        name = sender.name
+        suiteId = sender.id
+        sections = self.allProjects.treeWidget.getSec()
+        print name, " " , sections
+        self.statusBar().showMessage('Retrieving sections and test - please wait')
+        u = UpdateTests(sections,self.CPEMasterProject,name,suiteId,self.client)
+        #sections2update = u.getAllSections()
+        ns = u.getSuites()
+        if len(ns) > 0:
+            self.statusBar().showMessage('Sections retrieved - starting update')
+            u.updateAllTests()
+            self.statusBar().showMessage('Update done')
+        else:
+            self.statusBar().showMessage('No projects have this suite ' + name)
+              
 '''
 Class to display tests in a single suite in a QWidget
 '''
@@ -193,7 +214,7 @@ class AnalyzeTests(QWidget):
     def quit(self):
         print "Quitting!"
         self.close()
-        
+
 '''
 Class that handles selection tree to copy tests
 '''
@@ -205,6 +226,9 @@ class SectionTree(QTreeWidget):
         self.setHeaderHidden(True)
         self.itemChanged.connect (self.handleChangedTree)
         self.addItems(self.invisibleRootItem(),self.tree)
+    '''
+    Method to add sections to the QTreeWidget recursively
+    '''
     def addItems(self,parent,tree):
         for a in range(0,len(tree['sections'])):
             sname = tree['sections'][a]['name']
@@ -221,18 +245,26 @@ class SectionTree(QTreeWidget):
             item.setExpanded (True)
             if 'sections' in tree['sections'][a].keys():
                 self.addItems(item,tree['sections'][a])
+    '''
+    Method invoked when tree is changed - that is a checkbox is ticked/unticked
+    '''
     def handleChangedTree(self,item,column):
         if item.checkState(column) == QtCore.Qt.Checked:
-            print "checked", item, item.text(column)
-            print item.Id , " " , item.title
             self.selected_sections[item.Id] = item.title
         if item.checkState(column) == QtCore.Qt.Unchecked:
-            print "unchecked", item, item.text(column), item.Id
             if item.Id in self.selected_sections.keys():
                 del self.selected_sections[item.Id]
+        self.printSec
     def printSec(self):
         for a in self.selected_sections.keys():
-            print self.selected_sections[a]
+            print self.selected_sections[a] , " " , a
+    '''
+    Method to get the selected sections
+    Returns:
+    dictionary object where the keys are the section ids and the values are the titles
+    '''
+    def getSec(self):
+        return self.selected_sections
 '''
 Class to display sections in a QWidget
 '''
@@ -316,7 +348,7 @@ class ProjectWidget(QWidget):
         quitb.clicked.connect(self.parent().quit)
         hbox.addWidget(quitb)
         self.layout.addLayout(hbox)
-    def suiteClk(self,suiteName):
+    def suiteClk(self,suiteName,suiteId):
         # get the tree
         testTreeObj = TestTree(self.CPEMasterID,suiteName,self.client)
         testTree = testTreeObj.getTree()
@@ -332,9 +364,11 @@ class ProjectWidget(QWidget):
         hbox.addStretch(1)
         bbutton = QtGui.QPushButton('<< Back')
         quitb = QtGui.QPushButton('Quit')
-        abutton = QtGui.QPushButton('Update projects')
-        abutton.clicked.connect(self.treeWidget.printSec)
-        bbutton.clicked.connect(self.parent().selectMode)
+        abutton = QtGui.QPushButton('Update tests to projects')
+        abutton.clicked.connect(self.parent().updateTests)
+        setattr(abutton,'name',suiteName)
+        setattr(abutton,'id',suiteId)
+        bbutton.clicked.connect(self.parent().masterSuites)
         quitb.clicked.connect(self.parent().quit)
         hbox.addWidget(abutton)
         hbox.addWidget(bbutton)
@@ -417,8 +451,6 @@ class ProjectWidget(QWidget):
         ebox.addStretch(1)   
         ebox.addWidget(button)
         ebox.addWidget(qbutton)        
-        #hbox.addLayout(vbox)
- 
 
 if __name__ == '__main__':
 

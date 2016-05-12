@@ -9,7 +9,7 @@ from DiffSectionTree import *
 from DiffTestTrees import *
 #from testrailKeyMigration import migrateTestsInProject
 import logging
-from numpy.random import mtrand
+
 from DiffTestrailProjects import *
 from TestSectionTree import *
 client = APIClient('https://getipn.testrail.net/')
@@ -20,14 +20,22 @@ try:
 
 except APIError as e:
     print  e
-e = TestTree(11,"Basic functionality",client)
-et = e.getTree()
-for a in et['sections']:
-    print str(a)
-# e = DiffSectionTrees(11,10,"Basic functionality",client)
-# et = e.getDiffTree()
-# t = DiffTestTrees(e,11,4,"Basic functionality",client)
-# tt = t.getDiffTree()
+
+e = DiffSectionTrees(11,13,"SIP VOIP",client)
+et = e.getDiffTree()
+t = DiffTestTrees(e,11,13,"SIP VOIP",client)
+tt = t.getDiffTree()
+print tt
+tmp = tt['sections'][0]
+count = 0
+for s in tmp['sections']:
+    #print s
+    if 'tests' in s.keys():
+        for t in s['tests']:
+            print t
+            print t['title'] , " " #, t['action']
+            count = count +1
+print count
 # print tt
 # a = []
 # a = getTestDiffFromDiffTree(tt,a)
