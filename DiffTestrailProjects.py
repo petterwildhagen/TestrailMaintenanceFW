@@ -136,7 +136,7 @@ def getTestDiffFromDiffTree(diffTree,result):
                               +'/'+diffTree['sections'][a]['name'] 
                               + '/'+diffTree['sections'][a]['tests'][k]['title'] 
                               + " was " + diffTree['sections'][a]['tests'][k]['action']) 
-                if 'testDiff' in diffTree['sections'][a]['tests'][k].keys():
+                if 'change' in diffTree['sections'][a]['tests'][k].keys():
                     summary = printTestDiff(diffTree['sections'][a]['tests'][k]['change'])
                     
                     result.append(diffTree['sections'][a]['parents'] 
@@ -155,13 +155,13 @@ inDic - dictionary that describes difference between tests
 def printTestDiff(inDic): 
     rStr = ""
     if inDic['diffCode'] == "CONTENT_MISMATCH":
-        rStr = "Tests differ in these fields: "
+        rStr = " different in these fields: "
         for a in range(len(inDic['fields'])):
             rStr = rStr + ","+ inDic['fields'][a]['fieldName']
     elif inDic['diffCode'] == "FIELD_MISMATCH":
-        rStr = "Tests have different fields"
+        rStr = " have different fields"
     elif inDic['diffCode'] == "FIELD_COUNT_MISMATCH":
-        rStr = "Tests have different number of fields"
+        rStr = " have different number of fields"
     else:
         rStr = "Unknown deviation"
     return rStr

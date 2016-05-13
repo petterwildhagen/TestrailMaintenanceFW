@@ -26,16 +26,11 @@ et = e.getDiffTree()
 t = DiffTestTrees(e,11,13,"SIP VOIP",client)
 tt = t.getDiffTree()
 print tt
-tmp = tt['sections'][0]
-count = 0
-for s in tmp['sections']:
-    #print s
-    if 'tests' in s.keys():
-        for t in s['tests']:
-            print t
-            print t['title'] , " " #, t['action']
-            count = count +1
-print count
+a = []
+a = getTestDiffFromDiffTree(tt,a)
+print a
+for i in range(0,len(a)):
+    print a[i]
 # print tt
 # a = []
 # a = getTestDiffFromDiffTree(tt,a)
