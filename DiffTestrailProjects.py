@@ -61,7 +61,7 @@ def compareSuites(masterID,projectID,client):
                 v['psid'] = suites[i]['id']
                 e = DiffSectionTrees(masterID,projectID,master_suites[a]['name'],client)
                 t = DiffTestTrees(e,masterID,projectID,master_suites[a]['name'],client)
-                diffTree = t.getDiffTree() #createDiffTree(masterID, projectID, master_suites[a]['name'], client)
+                diffTree = t.getDiffTree() 
                 diffStr = []
                 diffStr = getDiffFromDiffTree(diffTree,diffStr)
                 if len(diffStr) == 0:

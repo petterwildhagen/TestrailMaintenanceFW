@@ -1,6 +1,8 @@
 '''
 Created on May 4, 2016
-Class to represent a tree of tests organized in sections
+Class to represent a tree of tests organized in sections.
+The class creates a tree structure as a JSON object to store the sections
+in the same parent child relationships as seen in the Testrail GUI.
 @author: petterwildhagen
 '''
 from testrail_lib import testrailError
@@ -82,6 +84,10 @@ class SectionTree:
         for a in range(0,len(obj)):
             if len(obj[a]['sections']) > 0:
                 self.append_section(obj[a]['sections'],io)
+'''
+Class to create JSON object that represents a tree structure of tests
+organized in a tree of sections equal to the structure seen in the Testrail GUI.
+'''
 class TestTree:
     def __init__(self,projectID,suiteName,client):
         self.projectID = projectID

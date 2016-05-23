@@ -218,7 +218,7 @@ class DiffTestTrees:
     '''
     def compareTestFields(self,srcFields,tarFields):
         blackList = ['id','section_id','milestone_id','refs','created_by','created_on','updated_on',
-                     'updated_by','estimate','suite_id']
+                     'updated_by','estimate','suite_id','estimate_forecast']
         sk = srcFields.keys()
         d = None
         for i in sk:

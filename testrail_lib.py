@@ -281,189 +281,21 @@ def getParent(diffTree,id,name):
     for a in range(0,len(diffTree['sections'])):
         res = getParent(diffTree['sections'][a],id,name)
     return res
-# '''
-# Function that appends a section to a diff tree.
-# The location where the node is appended is determined by matching the parent of the 
-# node with the name of the node it will be appended to
-# Parameters:
-# diffTree - the diff tree to append the node to
-# dt - the node to append to the diff tree
-# Returns:
-# the diff tree with the node appended to it
-# '''        
-# def append2DiffTree(diffTree,dt):
-#     if dt['parent'] == diffTree['name']:
-#         diffTree['sections'].append(dt)
-#         return diffTree
-#     for a in range(0,len(diffTree['sections'])):
-#         append2DiffTree(diffTree['sections'][a],dt)
-#     return diffTree  
-# '''
-# Function that appends test to diff tree
-# The location where the node is appended is determined by matching the parent of the 
-# the node with the name of the node it will be appended to
-# Parameters:
-# diffTree - the diff tree to append the node to
-# dt - the node to append to the diff tree
-# Returns:
-# the diff tree with the node appended to it
-# '''
-# def appendTest2DiffTree(diffTree,dt):
-#     if dt['parent'] == diffTree['name']:
-#         if 'tests' not in diffTree.keys():
-#             diffTree['tests'] = []
-#         diffTree['tests'].append(dt)
-#         return diffTree
-#     for a in range(0,len(diffTree['sections'])):
-#         appendTest2DiffTree(diffTree['sections'][a],dt)
-#     return diffTree  
+
 
 # '''
-# Function to check if the a test is in a section
+# Function to extract differences in tests from the diff tree
 # Parameters:
-# t : the test to look for
-# section :  the section to search
-# Returns:
-# the index of the title if found, -1 if the title is not found
-# '''  
-# def testInSection(t,section):
-#     for i in range(len(section)):
-#         if t == section[i]['title']:
-#             return i
-#     return -1
-'''
-Function to print a diff tree
-Parameters:
-diffTree - the diff tree to print
-'''
-def printDiffTree(diffTree):
-    for a in range(0,len(diffTree['sections'])):
-        if 'action' in diffTree['sections'][a].keys():
-        
-            print '**', ' ' , diffTree['sections'][a]['parents'],'/',diffTree['sections'][a]['name'] , '  was ' ,diffTree['sections'][a]['action']
-            if 'tests' in diffTree['sections'][a].keys():
-                for b in range(0,len(diffTree['sections'][a]['tests'])):
-                    print ' --', ' ', diffTree['sections'][a]['tests'][b]['title'] , ' was ' , diffTree['sections'][a]['tests'][b]['action']
-        if 'sections' in diffTree['sections'][a].keys():
-            printDiffTree(diffTree['sections'][a])
-'''
-Function to print tree to flat format
-Parameters:
-tree- tree structure to print 
-'''
-def printTests(tree):
-    for a in range(0,len(tree['sections'])):
-        print 'section ' , tree['sections'][a]['name']
-        if 'tests' in tree['sections'][a].keys():   
-            for t in range(0,len(tree['sections'][a]['tests'])):                 
-                print 'test, ' , tree['sections'][a]['tests'][t]['title']
-        if 'sections' in tree['sections'][a].keys(): 
-            printTests(tree['sections'][a])
-'''
-Function to extract differences from a diff tree
-Parameters:
-diffTree - the difftree to extract differences from
-Returns:
-differences found in diff tree
-'''    
-def getDiffFromDiffTree(diffTree,result):
-    for a in range(0,len(diffTree['sections'])):
-        if 'action' in diffTree['sections'][a].keys():
-            result.append(diffTree['sections'][a]['parents'] +'/'+diffTree['sections'][a]['name'] + '  was ' +diffTree['sections'][a]['action'])
-        if 'sections' in diffTree['sections'][a].keys():
-            getDiffFromDiffTree(diffTree['sections'][a],result)
-    return result
-'''
-Function to extract differences in tests from the diff tree
-Parameters:
-diffTree - the diff tree
-'''
-def getTestDiffFromDiffTree(diffTree,result):
-    for a in range(0,len(diffTree['sections'])):
-        if 'tests' in diffTree['sections'][a].keys():
-            for k in range(0,len(diffTree['sections'][a]['tests'])):
-                result.append(diffTree['sections'][a]['parents'] 
-                              +'/'+diffTree['sections'][a]['name'] 
-                              + diffTree['sections'][a]['tests'][k]['title'] 
-                              + " was " + diffTree['sections'][a]['tests'][k]['action']) 
-        if 'sections' in diffTree['sections'][a].keys():
-            getTestDiffFromDiffTree(diffTree['sections'][a],result)
-    return result
-
+# diffTree - the diff tree
 # '''
-# Function to create a tree structured JSON object from the flat structure returned from Testrail
-# Parameters:
-# json_in : the flat json object from testrail
-# name : the name of the tree
-# Returns:
-# A JSON object with a tree Structure
-# '''
-# def sections_JSONflat2tree(inp,name):
-#     output = {'sections' : [],
-#               'id' : 1,
-#               'parent_id' : None,
-#               'name' : name}
-# 
-#     for l in inp:
-#         if l['depth'] == 0:
-#             output['sections'].append({'name' : l['name'],
-#                                     'id' : l['id'],
-#                                     'sections' : [],
-#                                     'parent_id' : 1,
-#                                     'parent_name' : None
-#                                     })      
-#         else:
-#             append_section(output['sections'],l)
-#     # append paren relation names        
-#     return output
-# '''
-# Function to append a JSON object to the sections in a JSON tree
-# Parameters:
-# obj: the JSON tree to append the object to
-# io : the object to append to the tree
-# '''  
-# def append_section(obj,io):
-#     for a in range(0,len(obj)):
-#         if obj[a]['id'] == io['parent_id']:
-#             obj[a]['sections'].append({'name' : io['name'],
-#                                        'id' : io['id'],
-#                                        'parent_id' : io['parent_id'],
-#                                        'parent_name' : io['name'],
-#                                        'sections' : []})
-#             return 
-#     for a in range(0,len(obj)):
-#         if len(obj[a]['sections']) > 0:
-#             append_section(obj[a]['sections'],io)
-# '''
-# Function to create a tree structure of tests from a suite
-# Parameters:
-# sectionTree : tree structure of sections in the suite
-# flatJSONtests : flat JSON object with tests for the 
-# '''            
-# def tests_JSONflat2tree(sectionTree,flatJSONtests):
-#     for a in range(0,len(flatJSONtests)):
-#         test = flatJSONtests[a]
-#         append_test_2_tree(sectionTree['sections'],test)
-#     return sectionTree
-# '''
-# Function to append test to a sectionTree
-# Parameters:
-# sectionTree : the tree to append the test to
-# test : the test to append to the section tree
-# '''
-# def append_test_2_tree(sectionTree,test):
-# 
-#     sid = test['section_id']
-#     found = False
-#     for a in range(0,len(sectionTree)):
-#         if sid == sectionTree[a]['id']:
-#             if 'tests' not in sectionTree[a].keys():
-#                 sectionTree[a]['tests'] = []
-#             sectionTree[a]['tests'].append(test)
-#             found = True
-#     if not found:
-#         for a in range(0,len(sectionTree)):
-#             if 'sections' in sectionTree[a].keys():
-#                 append_test_2_tree(sectionTree[a]['sections'],test)
-        
-    
+# def getTestDiffFromDiffTree(diffTree,result):
+#     for a in range(0,len(diffTree['sections'])):
+#         if 'tests' in diffTree['sections'][a].keys():
+#             for k in range(0,len(diffTree['sections'][a]['tests'])):
+#                 result.append(diffTree['sections'][a]['parents'] 
+#                               +'/'+diffTree['sections'][a]['name'] 
+#                               + diffTree['sections'][a]['tests'][k]['title'] 
+#                               + " was " + diffTree['sections'][a]['tests'][k]['action']) 
+#         if 'sections' in diffTree['sections'][a].keys():
+#             getTestDiffFromDiffTree(diffTree['sections'][a],result)
+#     return result

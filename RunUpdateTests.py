@@ -9,6 +9,9 @@ Class to display which tests are updated in which projects
 from PyQt4 import Qt, QtGui, QtCore
 from PyQt4.Qt import *
 class RunUpdateTests(QWidget):
+    '''
+    init method that creates widget
+    '''
     def __init__(self,tests,name,client):
         QWidget.__init__(self)
         self.tests = tests
@@ -34,3 +37,8 @@ class RunUpdateTests(QWidget):
         self.textField.append('\nUpdate done.')
     def updateTest(self,id,test):
         self.client.send_post('update_case/' + str(id),test)  
+    '''
+    method to close the widget
+    '''
+    def quit(self):
+        self.close()
