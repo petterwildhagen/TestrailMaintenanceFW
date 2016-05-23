@@ -13,14 +13,20 @@ import sys
 from testrail import *
 from PyQt4 import Qt, QtGui, QtCore
 from PyQt4.Qt import *
-#from testrail_lib import *
+from RunUpdateTests import *
 from DiffTestrailProjects import *
-from UpdateTests import *
+from TestsAndSuitesToUpdate import *
+from IterableUpdateTests import *
+from AnalyzeSections import *
 
 '''
 Class to handle login to Testrail
 '''
 class Login(QtGui.QDialog):
+    ''' 
+    Constructor method
+    Parameters: None
+    '''
     def __init__(self, parent=None):
         super(Login, self).__init__(parent)
         self.setWindowTitle('Testrail analysis tool - Login')
@@ -38,7 +44,13 @@ class Login(QtGui.QDialog):
         layout.addWidget(self.passwdLabel)
         layout.addWidget(self.textPass)
         layout.addWidget(self.buttonLogin)
-
+    
+    '''
+    Method to handle login to Testrail. 
+    The method sets private members user and password
+    Parameters:
+    None
+    '''
     def handleLogin(self):
         try:
             client = APIClient('https://getipn.testrail.net/')
@@ -50,8 +62,14 @@ class Login(QtGui.QDialog):
             self.accept()
         except APIError as e:
             QtGui.QMessageBox.warning(self, 'Error',str(e))
+    '''
+    Method to get username
+    '''
     def getUsername(self):
         return self.username
+    '''
+    Method to get password
+    '''
     def getPassword(self):
         return self.password
 '''
@@ -68,6 +86,13 @@ Class that defines the main window
 Includes methods to navigate between cental widgets
 '''        
 class MainWindow(QtGui.QMainWindow):
+    '''
+    Init method.
+    The method sets the main layout and the central widget to class ProjectWidget
+    Parameters:
+    username - the username to log into Testrail
+    password - the password to log into Testrail
+    '''
     def __init__(self, username,password,parent=None):
         super(MainWindow, self).__init__(parent)
         self.username = username
@@ -82,17 +107,20 @@ class MainWindow(QtGui.QMainWindow):
         self.subwindows = []
         self.setCentralWidget(self.central_widget)
         self.initUI()
-    def initUI(self):
-        
+    def initUI(self):      
         self.setGeometry(100, 100, 600, 400)
-        self.setWindowTitle('Testrail analysis tool - main window')   
-    
+        self.setWindowTitle('Testrail analysis tool - main window')       
         self.statusBar()
         self.show()
+    '''
+    Method to quit the main application
+    '''
     def quit(self):
         print 'Quitting!!'
-        #QtGui.QApplication.instance().quit
         self.close()
+    '''
+    Method to remove all widgets from the central_widget
+    '''
     def removeWidgets(self):
         for c in self.central_widget.layout.children():          
             for w in reversed(range(c.count())):
@@ -106,40 +134,55 @@ class MainWindow(QtGui.QMainWindow):
                 self.central_widget.layout.itemAt(i).widget().setParent(None)
             except AttributeError:
                 print 'caught exception for widget on main layout'
-        print "Widgets removed"
+    '''
+    Method invoked when a project is selected. 
+    Invokes method to display all suites in the project.
+    The method relies on the sender object to pass attributes from the caller
+    '''
     def projectClk(self):
         sender = self.sender()
         self.statusBar().showMessage('Project ' + sender.text() + ' selected')
         self.setWindowTitle('Testrail analysis tool - ' + str(sender.text()))
         self.show()  
-        sender = self.sender()
-        print "Project" , sender.ID , sender.text() , " was selected "
         self.removeWidgets()
         self.allProjects.displaySuitesInProject(sender.ID,sender.text())
+    '''
+    Method that is invoked when a suite is selected (clicked) to update tests from.
+    Invokes method suiteClk of central_widget to display a section tree of the suite.
+    The method relies on the sender object to pass attributes from the caller.
+    '''
     def suiteClk(self):
         sender = self.sender()
         suiteName = sender.name
         suiteID = sender.ID
-        print "suiteClk " , sender.name , " pressed"
         self.removeWidgets()
         self.allProjects.suiteClk(suiteName,suiteID)
         self.statusBar().showMessage('Please select sections to update from')
+    '''
+    Method invoked to go to the 'display all projects' page.
+    Invokes metho of central widget placeProject to display all projects.
+    '''
     def goBackToProjects(self):     
         self.statusBar().showMessage('Returning to project overview')
         self.setWindowTitle('Testrail analysis tool - Main Window')
         self.removeWidgets()
         self.allProjects.placeProjects()
-            
+    '''
+    Method invoked when 'analyze sections' is pressed.
+    An instance of 'AnalyzeSections' is added to subwindows and displays the result
+    '''        
     def analyzeSections(self):   
         sender = self.sender()
         inp = sender.difftree
         name = sender.pname
-        print 'Analyze suites ' , sender.sid , ' and suite ', sender.mid , ' name : ' ,sender.suitename
-        # open a new window
         lw = AnalyzeSections(inp,name)
         lw.setGeometry(QRect(100, 100, 400, 200))
         lw.show()
         self.subwindows.append(lw)
+    '''
+    Method invoked when 'analyze tests' is pressed.
+    An instance of 'AnalyzeTests' is added to subwindows and displays the result
+    '''    
     def analyzeTests(self):
         sender = self.sender()
         name = sender.pname
@@ -148,48 +191,91 @@ class MainWindow(QtGui.QMainWindow):
         lw.setGeometry(QRect(150,150,500,300))
         lw.show()
         self.subwindows.append(lw)
+    '''
+    Method invoked when Master Suite is selected.
+    Invokes masterSuites of central_widget
+    '''
     def masterSuites(self):
         self.removeWidgets()
         self.allProjects.masterSuites()
         self.statusBar().showMessage('Please select a suite to update from')
         print "Master selected"
+    '''
+    Method invoked when Master Suite is selected.
+    Invokes placeProjects of central_widget
+    '''
     def placeProjects(self):
         self.removeWidgets()
         self.allProjects.placeProjects()
-        print "placeProjects selected"
+    '''
+    Method to select mode
+    Invokes selectMode in central_widget
+    '''
     def selectMode(self):
         self.removeWidgets()
         self.allProjects.selectMode()
         self.statusBar().showMessage('Please select to update from master or verify projects')
+    '''
+    Method called to update tests.
+    Creates instance of TestsAndSuitesToUpdate which provides data to 
+    an instance of class IterableUpdateTests. If there are any tests to 
+    update then this class will provide them in a list.
+    Method relies on object from self.sender() to propagate name and if of suite.
+    If any projects have suites matching suite name, then method updateAllTests is 
+    invoked to update tests in all projects where present.
+    '''
     def updateTests(self):
-        print "update sec called"
         sender = self.sender()
-        #sections = sender.sections
         name = sender.name
         suiteId = sender.id
         sections = self.allProjects.treeWidget.getSec()
-        print name, " " , sections
         self.statusBar().showMessage('Retrieving sections and test - please wait')
-        u = UpdateTests(sections,self.CPEMasterProject,name,suiteId,self.client)
-        #sections2update = u.getAllSections()
+        u = TestsAndSuitesToUpdate(sections,self.CPEMasterProject,name,suiteId,self.client)
+        iu = IterableUpdateTests(u.getSuites(),u.getTests())
+        lst = iu.getIterableTestsToUpdate()
         ns = u.getSuites()
-        if len(ns) > 0:
+        if len(ns) > 0 and len(lst) > 0:
             self.statusBar().showMessage('Sections retrieved - starting update')
-            u.updateAllTests()
-            self.statusBar().showMessage('Update done')
+            for a in lst:
+                print a
+            rut = RunUpdateTests(lst,name,self.client)
+            rut.setGeometry(QRect(250,250,700,500))
+            rut.show()
+            self.subwindows.append(rut)
+            self.statusBar().showMessage('Running update')
+            rut.runUpdates()
+            self.statusBar().showMessage('Please select a suite to update from')
         else:
-            self.statusBar().showMessage('No projects have this suite ' + name)
-              
+            if ns == 0:
+                self.statusBar().showMessage('No projects have this suite ' + name)
+            else:
+                self.statusBar().showMessage('No projects have tests from master in suite ' + name)
+#     '''
+#     Run test update and display result in text box
+#     '''
+#     def runUpdateTests(self,tests,name):  
+#         self.removeWidgets()
+#         self.allProjects.runUpdateTests(tests)
+#         self.statusBar().showMessage('Running update on tests from master in suite' + name) 
 '''
-Class to display tests in a single suite in a QWidget
+Class to display test differences in a single suite in a QWidget
 '''
 class AnalyzeTests(QWidget):
+    '''
+    init method.
+    Parameters:
+    inp - the diff tree to display
+    name - name of the project
+    '''
     def __init__(self,inp,name):
         QWidget.__init__(self)
         self.layout = QtGui.QVBoxLayout(self)
         self.DiffTree = inp
         self.pname = name
         self.initUI()
+    '''
+    method to display test differences in the widget
+    '''
     def initUI(self):
         self.setWindowTitle(self.pname + " - " + self.DiffTree['name'])
         # display differences in sections
@@ -211,14 +297,25 @@ class AnalyzeTests(QWidget):
         ebox.addStretch(1)   
         ebox.addWidget(button)
         self.layout.addLayout(ebox)
+    '''
+    method to close the widget
+    '''
     def quit(self):
-        print "Quitting!"
         self.close()
 
 '''
-Class that handles selection tree to copy tests
+Class that handles selection tree to copy tests.
+The class displays all sections in a suite in a tree structure.
+The class allows to select sections and access the selected sections
+in a get method
 '''
 class SectionTree(QTreeWidget):
+    '''
+    init method.
+    The method calls method addItems to build the tree to display in the GUI.
+    Parameters:
+    tree - section tree of a suite
+    '''
     def __init__(self,tree):
         QTreeWidget.__init__(self)
         self.tree = tree
@@ -228,6 +325,9 @@ class SectionTree(QTreeWidget):
         self.addItems(self.invisibleRootItem(),self.tree)
     '''
     Method to add sections to the QTreeWidget recursively
+    Parameters 
+    parent - the element to add subsequent elements to
+    tree - the section tree to traverse.
     '''
     def addItems(self,parent,tree):
         for a in range(0,len(tree['sections'])):
@@ -247,6 +347,7 @@ class SectionTree(QTreeWidget):
                 self.addItems(item,tree['sections'][a])
     '''
     Method invoked when tree is changed - that is a checkbox is ticked/unticked
+    The method updates member selected_sections accordingly.
     '''
     def handleChangedTree(self,item,column):
         if item.checkState(column) == QtCore.Qt.Checked:
@@ -254,10 +355,6 @@ class SectionTree(QTreeWidget):
         if item.checkState(column) == QtCore.Qt.Unchecked:
             if item.Id in self.selected_sections.keys():
                 del self.selected_sections[item.Id]
-        self.printSec
-    def printSec(self):
-        for a in self.selected_sections.keys():
-            print self.selected_sections[a] , " " , a
     '''
     Method to get the selected sections
     Returns:
@@ -265,41 +362,13 @@ class SectionTree(QTreeWidget):
     '''
     def getSec(self):
         return self.selected_sections
-'''
-Class to display sections in a QWidget
-'''
-class AnalyzeSections(QWidget):
-    def __init__(self,inp,name):
-        QWidget.__init__(self)
-        self.layout = QtGui.QVBoxLayout(self)
-        self.DiffTree = inp
-        self.pname = name
-        self.initUI()
-    def initUI(self):
-        self.setWindowTitle(self.pname + " - " + self.DiffTree['name'])
-        # display differences in sections
-        la = QtGui.QLabel("Sections in suite " + self.DiffTree['name'])
-        hbox = QtGui.QHBoxLayout()          
-        hbox.addWidget(la)
-        self.layout.addLayout(hbox)
-  
-        diff = self.DiffTree['diffStr']
-        for i in range(0,len(diff)):
-            hbox = QtGui.QHBoxLayout()
-            l = QtGui.QLabel(str(diff[i]))
-            hbox.addWidget(l)
-            self.layout.addLayout(hbox)
-            
-        ebox = QtGui.QHBoxLayout()
-        button = QtGui.QPushButton('Quit')
-        button.clicked.connect(self.quit)
-        ebox.addStretch(1)   
-        ebox.addWidget(button)
-        self.layout.addLayout(ebox)
 
+    '''
+    method to close the widget
+    '''
     def quit(self):
-        print "Quitting!"
         self.close()
+
 '''
 Class to display sections in a QWidget
 '''
@@ -374,7 +443,21 @@ class ProjectWidget(QWidget):
         hbox.addWidget(bbutton)
         hbox.addWidget(quitb)
         self.layout.addLayout(hbox)
-
+#     def runUpdateTests(self,tests):
+#         
+#         self.txtbox = QLineEdit()
+#         layout = QtGui.QVBoxLayout()
+#         layout.addWidget(self.txtbox)
+#         self.layout.addLayout(layout)
+#         hbox = QtGui.QHBoxLayout()
+#         hbox.addStretch(1)
+#         bbutton = QtGui.QPushButton('<< Back')
+#         quitb = QtGui.QPushButton('Quit')
+#         bbutton.clicked.connect(self.parent().selectMode)
+#         quitb.clicked.connect(self.parent().quit)
+#         hbox.addWidget(bbutton)
+#         hbox.addWidget(quitb)
+#         self.layout.addLayout(hbox)
     def placeProjects(self):
         #label = QtGui.QLabel("Click on one of the projects")  
         mp = self.client.send_get('get_project/' + str(self.CPEMasterID))

@@ -1,12 +1,14 @@
 '''
 Created on May 6, 2016
 
-Class to update all tests in a list of sections.
+Class to extract a list of tests to be updated from sections
+as well as a list of suites in project where these updates are to be run
+This class provides input data to class IterableUpdateTests
 
 @author: petterwildhagen
 '''
 
-class UpdateTests():
+class TestsAndSuitesToUpdate():
     '''
     init method: 
     Initializes class by extracting all tests in master project to use as source for update
@@ -26,14 +28,14 @@ class UpdateTests():
         self.client = client
         self.sections = sections
         self.tests = []
-        self.getTests()
+        self.extractTests()
         self.suites = self.getAllSuites()
         self.addAllSections()
     '''
     Method that adds tests to member test which is a list of sections that has objects 
     that contain tests
     '''
-    def getTests(self):
+    def extractTests(self):
         #self.tests = {'sections' : []}
         for s in self.sections.keys():
             tests = self.client.send_get('get_cases/' + str(self.masterID) + '&suite_id=' + str(self.suiteId) + 
@@ -110,6 +112,12 @@ class UpdateTests():
     '''                    
     def getSuites(self):
         return self.suites
+    '''
+    Method to get all tests
+    '''
+    def getTests(self):
+        return self.tests
+  
     '''
     Method to update all tests in a section.
     Missing tests in the source are not flagged.
