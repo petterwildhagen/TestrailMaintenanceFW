@@ -50,7 +50,7 @@ class TestsAndSuitesToUpdate():
     Method to remove fields that are not to be part of update
     '''
     def removeFields(self,tests):
-        black_list=  ["id","section_id", "milestone_id", "refs","suite_id"]
+        black_list=  ["id","section_id", "milestone_id", "refs","suite_id","estimate_forecast"]
         for i in range(0,len(tests)):
             for k in tests[i].keys():
                 if k in black_list:

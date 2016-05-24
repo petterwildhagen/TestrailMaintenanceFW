@@ -7,10 +7,11 @@ Created on May 23, 2016
 from testrail import *
 from PyQt4 import Qt, QtGui, QtCore
 from PyQt4.Qt import *
+from DisplayContent import DisplayContent
 '''
 Class to display test differences in a single suite in a QWidget
 '''
-class AnalyzeTests(QWidget):
+class AnalyzeTests(DisplayContent):
     '''
     init method.
     Parameters:
@@ -18,8 +19,7 @@ class AnalyzeTests(QWidget):
     name - name of the project
     '''
     def __init__(self,inp,name):
-        QWidget.__init__(self)
-        self.layout = QtGui.QVBoxLayout(self)
+        DisplayContent.__init__(self)
         self.DiffTree = inp
         self.pname = name
         self.initUI()
@@ -33,22 +33,5 @@ class AnalyzeTests(QWidget):
         hbox = QtGui.QHBoxLayout()          
         hbox.addWidget(la)
         self.layout.addLayout(hbox)
-  
         diff = self.DiffTree['testDiffStr']
-        for i in range(0,len(diff)):
-            hbox = QtGui.QHBoxLayout()
-            l = QtGui.QLabel(str(diff[i]))
-            hbox.addWidget(l)
-            self.layout.addLayout(hbox)
-            
-        ebox = QtGui.QHBoxLayout()
-        button = QtGui.QPushButton('Quit')
-        button.clicked.connect(self.quit)
-        ebox.addStretch(1)   
-        ebox.addWidget(button)
-        self.layout.addLayout(ebox)
-    '''
-    method to close the widget
-    '''
-    def quit(self):
-        self.close()
+        self.displayContent(diff)

@@ -125,7 +125,7 @@ class DiffTestTrees:
                 for i in range(0,len(src['tests'])):
                     ct = {'title' : src['tests'][i]['title'],
                       'parent' : src['name'],
-                      'action' : 'amissing'}
+                      'action' : 'missing'}
     
                     self.appendTest2DiffTree(self.diffTree, ct)       
         #return diffTree      

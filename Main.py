@@ -199,15 +199,10 @@ class MainWindow(QtGui.QMainWindow):
 if __name__ == '__main__':
 
     app = QtGui.QApplication(sys.argv)
-    '''
+    
     login = Login()
 
     if login.exec_() == QtGui.QDialog.Accepted:
         window = MainWindow(login.getUsername(),login.getPassword())
         window.show()
         sys.exit(app.exec_())
-    '''
-    window = MainWindow('petter.wildhagen@testify.no','Passord01')
-    window.show()
-    sys.exit(app.exec_())   
-    

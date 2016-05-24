@@ -116,7 +116,7 @@ class CentralWidget(QWidget):
     
         suiteDiffTree = compareSuites(self.CPEMasterID,ID,self.client)
         for i in range(0,len(suiteDiffTree)):
-            print suiteDiffTree[i]['diffTree']
+            print suiteDiffTree[i]
             hbox = QtGui.QHBoxLayout()
             self.layout.addLayout(hbox)
             slabel = QtGui.QLabel(suiteDiffTree[i]['name'])
