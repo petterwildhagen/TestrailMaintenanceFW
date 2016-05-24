@@ -58,7 +58,6 @@ class MainWindow(QtGui.QMainWindow):
     Method to quit the main application
     '''
     def quit(self):
-        print 'Quitting!!'
         self.close()
     '''
     Method to remove all widgets from the central_widget
@@ -141,7 +140,6 @@ class MainWindow(QtGui.QMainWindow):
         self.removeWidgets()
         self.centralWidget.masterSuites()
         self.statusBar().showMessage('Please select a suite to update from')
-        print "Master selected"
     '''
     Method invoked when Master Suite is selected.
     Invokes placeProjects of central_widget
@@ -178,8 +176,6 @@ class MainWindow(QtGui.QMainWindow):
         ns = u.getSuites()
         if len(ns) > 0 and len(lst) > 0:
             self.statusBar().showMessage('Sections retrieved - starting update')
-            for a in lst:
-                print a
             rut = RunUpdateTests(lst,name,self.client)
             rut.setGeometry(QRect(250,250,700,500))
             rut.show()
